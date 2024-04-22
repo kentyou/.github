@@ -1,0 +1,11 @@
+{
+    "name": "Kentyou Create Tag Workflow",
+    "description": "Provides a convenient means of manually creating a tag for a repository.",
+    "iconName": "octicon workflow",
+    "categories": [
+        "continuous-integration"
+    ],
+    "filePatterns": [
+        "pom.xml$"
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "name": "Kentyou Default CI Build Workflow",
+    "description": "This is the default CI workflow for Kentyou Maven projects.",
+    "iconName": "octicon workflow",
+    "categories": [
+        "continuous-integration"
+    ],
+    "filePatterns": [
+        "pom.xml$"
+    ]
+}
