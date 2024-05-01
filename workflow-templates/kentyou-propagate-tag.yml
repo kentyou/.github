@@ -1,9 +1,10 @@
 name: Propagate Build Tags
 
-# This GitHub Actions workflow facilitates the creation and
-# deployment of a release tag based dependencies.
+# This GitHub Actions workflow detects a downstream trigger to
+# update a release tag, tags the repository, then propagates the
+# trigger to upstream repositories.
 #
-# It is triggered by a repository dispatch event from a 
+# It is triggered by a repository dispatch event from a
 # dependency, and will then (if possible) create the
 # same tag in this repository
 #
@@ -20,17 +21,18 @@ on:
     types: [dependency-tag]
 
 jobs:
-  propagate:
+
+  check-upstream-and-tag:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+    - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
     - name: Set up JDK 17
       uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - name: Check Existing oidc-rest Deployment
+    - name: Check Existing upstream oidc-rest Deployment
       id: dep1-exists
       uses: kentyou/build-automation/actions/maven-deploy-check@b5aa5036b34fd0c907df6649c9afc34635e851ef # v1.0.0
       with:
@@ -39,7 +41,7 @@ jobs:
         artifact: 'com.kentyou.oidc:authenticator:${kentyou.oidc.version}'
         cancel-workflow: false
         repo-secret: ${{ secrets.KENTYOU_CI_PAT }}
-    - name: Check Existing sensinact-gateway Deployment
+    - name: Check Existing upstream sensinact-gateway Deployment
       id: dep2-exists
       uses: kentyou/build-automation/actions/maven-deploy-check@b5aa5036b34fd0c907df6649c9afc34635e851ef # v1.0.0
       with:
@@ -48,7 +50,7 @@ jobs:
         artifact: 'org.eclipse.sensinact.gateway.core:api:${sensinact.version}'
         cancel-workflow: false
         repo-secret: ${{ secrets.KENTYOU_CI_PAT }}
-    - name: Check Existing kentyou-datastore Deployment
+    - name: Check Existing upstream kentyou-datastore Deployment
       id: dep3-exists
       uses: kentyou/build-automation/actions/maven-deploy-check@b5aa5036b34fd0c907df6649c9afc34635e851ef # v1.0.0
       with:
@@ -62,3 +64,20 @@ jobs:
       run: gh workflow run kentyou-create-tag.yml -f git-ref=main -f tag-name=${{ github.event.client_payload.tag-name }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-dependents:
+
+    runs-on: ubuntu-latest
+    needs: check-upstream-and-tag
+
+    strategy:
+      matrix:
+        repo-name: ['repo1', 'repo2']
+
+    steps:
+    - name: Notify dependents
+      uses: kentyou/build-automation/actions/downstream-dispatch@c97a00fe04569dc601a316aabb0fe9068a26724b # v1.0.0
+      with:
+        repo-name: ${{ matrix.repo-name }}
+        tag-name: ${{ inputs.tag-name }}
+        repo-secret: ${{ secrets.KENTYOU_DISPATCH_PAT }}
