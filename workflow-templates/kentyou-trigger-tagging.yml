@@ -3,56 +3,24 @@ name: Trigger the propagation of a Kentyou release tag
 # This GitHub Actions workflow triggers the creation and
 # deployment of a release tag based on user-specified inputs.
 #
-# It should only be used by a "top-level" repository, like a
-# "product" or "demo" that aggregates other dependencies to build
-# a deployable system.
-#
 # The process is manually triggered, and allows users to specify
 # both the Git reference (e.g., a commit SHA or branch name) and
 # the name of the tag to be created.
 #
-# If the process goes as expected, the tagging should eventually
-# be propagated back to this repository to complete the cycle.
-#
-# Note that below "push-tag" is set to false, as this script should
-# trigger the tagging process, but should not actually tag this
-# repository. That is done at the end if all tags are pushed
-# successfully.
+# Once triggered, this workflow notifies all of the "root" repositories
+# that constitute Kentyou's deliverables. If these root repositories
+# build successfully, they will in turn notify projects that depend
+# on them, and so on and so forth.
 
 on:
   workflow_dispatch:
     inputs:
-      git-ref:
-        description: 'Git Reference to tag - usually a branch (will use HEAD) or commit'
-        required: true
-        default: 'main'
-        type: string
       tag-name:
         description: 'The name of the tag to create'
         required: true
         type: string
 
 jobs:
-  build-and-check-tag:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
-      with:
-        ref: ${{ inputs.git-ref }}
-    - name: Set up JDK 17
-      uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
-    - name: Create and Publish tag
-      uses: kentyou/build-automation/actions/maven-tag@874a8ed8da55167d5a625716cade399570f98855 # v1.1.1
-      with:
-        tag-name: ${{ inputs.tag-name }}
-        repo-secret: ${{ secrets.GITHUB_TOKEN }}
-        push-tag: false
 
   notify-dependents:
 

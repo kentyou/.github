@@ -1,28 +1,22 @@
 name: Propagate Build Tags
 
-# This GitHub Actions workflow detects a downstream trigger to
-# update a release tag, tags the repository, then propagates the
-# trigger to upstream repositories.
-#
-# It is triggered by a repository dispatch event from a
-# dependency, and will then (if possible) create the
-# same tag in this repository
-#
-# Implementation note: this workflow would be a lot cleaner if
-# it were to use matricies, but unfortunately at this time
-# they allow allow for a single output. We need to ensure that
-# ALL of the dependencies are deployed. There are some workarounds,
-# but I decided that it wasn't worth the bother. So for now, all
-# dependencies need to be listed one-by-one.
-#  --> See: https://github.com/orgs/community/discussions/17245
+# This GitHub Actions workflow detects a trigger from a dependency
+# repository to update a release tag, tags the repository, then 
+# propagates the trigger to its dependent repositories.
 
 on:
   repository_dispatch:
     types: [dependency-tag]
+  workflow_dispatch:
+    inputs:
+      tag-name:
+        description: 'The name of the tag to create'
+        required: true
+        type: string
 
 jobs:
 
-  check-upstream-and-tag:
+  check-dependencies-and-tag:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
@@ -32,43 +26,24 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - name: Check Existing upstream oidc-rest Deployment
-      id: dep1-exists
-      uses: kentyou/build-automation/actions/maven-deploy-check@b5aa5036b34fd0c907df6649c9afc34635e851ef # v1.0.0
+    - name: Check Existing Deploy
+      uses: kentyou/build-automation/actions/maven-deploy-check@deb99e7439c28224de6ec8bb19f1a27691f7cfc0 # v1.1.1 to be released?
       with:
+        artifact: 'artifactGroup:artifactID:artifactVersion' 'artifactGroup:artifactID:artifactVersion'
         module-path: parent
-        tag-name: ${{ github.event.client_payload.tag-name }}
-        artifact: 'com.kentyou.oidc:authenticator:${kentyou.oidc.version}'
-        cancel-workflow: false
-        repo-secret: ${{ secrets.KENTYOU_CI_PAT }}
-    - name: Check Existing upstream sensinact-gateway Deployment
-      id: dep2-exists
-      uses: kentyou/build-automation/actions/maven-deploy-check@b5aa5036b34fd0c907df6649c9afc34635e851ef # v1.0.0
+        tag-name: ${{ github.ref_name }}
+        cancel-workflow: 'MISSING'
+        repo-secret: ${{ secrets.KENTYOU_DISPATCH_PAT }}
+    - name: Create and Publish tag
+      uses: kentyou/build-automation/actions/maven-tag@f08ff697ccd326ae99f9dc675a7b1b201029f5c2 # v1.1.0
       with:
-        module-path: parent
-        tag-name: ${{ github.event.client_payload.tag-name }}
-        artifact: 'org.eclipse.sensinact.gateway.core:api:${sensinact.version}'
-        cancel-workflow: false
-        repo-secret: ${{ secrets.KENTYOU_CI_PAT }}
-    - name: Check Existing upstream kentyou-datastore Deployment
-      id: dep3-exists
-      uses: kentyou/build-automation/actions/maven-deploy-check@b5aa5036b34fd0c907df6649c9afc34635e851ef # v1.0.0
-      with:
-        module-path: parent
-        tag-name: ${{ github.event.client_payload.tag-name }}
-        artifact: 'com.kentyou.web.filters:rest:${kentyou.web.filters.version}'
-        cancel-workflow: false
-        repo-secret: ${{ secrets.KENTYOU_CI_PAT }}
-    - name: Create the Tag
-      if: ${{ steps.dep1-exists.outputs.exists == 'true' && steps.dep2-exists.outputs.exists == 'true' && steps.dep3-exists.outputs.exists == 'true' }}
-      run: gh workflow run kentyou-create-tag.yml -f git-ref=main -f tag-name=${{ github.event.client_payload.tag-name }}
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        tag-name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
+        repo-secret: ${{ secrets.GITHUB_TOKEN }}
 
   notify-dependents:
 
     runs-on: ubuntu-latest
-    needs: check-upstream-and-tag
+    needs: check-dependencies-and-tag
 
     strategy:
       matrix:
@@ -79,5 +54,5 @@ jobs:
       uses: kentyou/build-automation/actions/downstream-dispatch@c97a00fe04569dc601a316aabb0fe9068a26724b # v1.0.0
       with:
         repo-name: ${{ matrix.repo-name }}
-        tag-name: ${{ inputs.tag-name }}
+        tag-name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
         repo-secret: ${{ secrets.KENTYOU_DISPATCH_PAT }}
