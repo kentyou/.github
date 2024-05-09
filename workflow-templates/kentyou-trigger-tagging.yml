@@ -19,6 +19,10 @@ on:
         description: 'The name of the tag to create'
         required: true
         type: string
+      release-repo:
+        description: 'The name of the destination repository'
+        required: false
+        type: string
 
 jobs:
 
@@ -37,3 +41,4 @@ jobs:
         repo-name: ${{ matrix.repo-name }}
         tag-name: ${{ inputs.tag-name }}
         repo-secret: ${{ secrets.KENTYOU_DISPATCH_PAT }}
+        release-repo: ${{ inputs.release-repo  }}

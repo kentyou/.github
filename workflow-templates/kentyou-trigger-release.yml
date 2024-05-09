@@ -1,24 +1,22 @@
-name: Propagate Build Tags
+name: Accept Build Tag
 
 # This GitHub Actions workflow detects a trigger from a dependency
-# repository to update a release tag, tags the repository, then
-# propagates the trigger to its dependent repositories.
+# repository to update a release tag and kicks off a release.
+#
+# This is intended for the "final destination" project or product.
+# Receiving this event means that all dependencies have been tagged,
+# and it is now safe to kick off a product release.
 
 on:
   repository_dispatch:
     types: [dependency-tag]
-  workflow_dispatch:
-    inputs:
-      tag-name:
-        description: 'The name of the tag to create'
-        required: true
-        type: string
 
 jobs:
 
   check-dependencies-and-tag:
+    if: github.repository == github.event.inputs.release-repo
     runs-on: ubuntu-latest
-    steps:
+    steps
     - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
     - name: Set up JDK 17
       uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
@@ -29,7 +27,7 @@ jobs:
     - name: Check Existing Deploy
       uses: kentyou/build-automation/actions/maven-deploy-check@deb99e7439c28224de6ec8bb19f1a27691f7cfc0 # v1.1.1 to be released?
       with:
-        artifact: 'artifactGroup:artifactID:artifactVersion artifactGroup:artifactID:artifactVersion'
+        artifact: 'artifactGroup:artifactID:artifactVersion'
         module-path: parent
         tag-name: ${{ github.ref_name }}
         cancel-workflow: 'MISSING'
@@ -40,19 +38,6 @@ jobs:
         tag-name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
         repo-secret: ${{ secrets.GITHUB_TOKEN }}
 
-  notify-dependents:
-
-    runs-on: ubuntu-latest
-    needs: check-dependencies-and-tag
-
-    strategy:
-      matrix:
-        repo-name: ['repo1', 'repo2']
-
-    steps:
-    - name: Notify dependents
-      uses: kentyou/build-automation/actions/downstream-dispatch@c97a00fe04569dc601a316aabb0fe9068a26724b # v1.0.0
-      with:
-        repo-name: ${{ matrix.repo-name }}
-        tag-name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
-        repo-secret: ${{ secrets.KENTYOU_DISPATCH_PAT }}
+  release:
+    if: github.repository == github.event.inputs.release-repo
+    run: echo "Perform release of the product to production server? Or what?"
