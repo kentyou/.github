@@ -25,12 +25,12 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Set up Docker
-        uses: kentyou/build-automation/actions/docker-setup@2c1c6bb9e9f1d48fb9c5ac5fe8ce6e8b60cb7cb5
+        uses: kentyou/build-automation/actions/docker-setup@1f7bed89a5408924188b2d9b661a678d7e332411
         with:
           docker-user: ${{ github.actor }}
           docker-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Push Docker Image
-        uses: kentyou/build-automation/actions/docker-push@23058974f4ef4399e417ce06c3a0586e7392f994
+        uses: kentyou/build-automation/actions/docker-push@1f7bed89a5408924188b2d9b661a678d7e332411
         with:
           push-image: ${{ github.ref_name == 'main' }}
           maven-token: ${{ secrets.KENTYOU_CI_PAT }}
