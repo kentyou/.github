@@ -34,5 +34,5 @@ jobs:
         with:
           push-image: ${{ github.ref_name == 'main' }}
           maven-token: ${{ secrets.KENTYOU_CI_PAT }}
-          docker-tags: ${{ inputs.tag-name == '' && 'edge' || inputs.tag-name }}
-          base-tag: ghcr.io/kentyou/[CATEGORY]
+          base-tag: ghcr.io/kentyou/[BASE]
+          tag-name: ${{ inputs.tag-name == '' && 'edge' || inputs.tag-name }}
