@@ -1,0 +1,38 @@
+name: Kentyou CI Build for Docker Projects
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Set up JDK 17
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Set up Docker
+        uses: kentyou/build-automation/actions/docker-setup@2c1c6bb9e9f1d48fb9c5ac5fe8ce6e8b60cb7cb5
+        with:
+          docker-user: ${{ github.actor }}
+          docker-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push Docker Image
+        uses: kentyou/build-automation/actions/docker-push@23058974f4ef4399e417ce06c3a0586e7392f994
+        with:
+          push-image: ${{ github.ref_name == 'main' }}
+          maven-token: ${{ secrets.KENTYOU_CI_PAT }}
+          docker-tags: ${{ inputs.tag-name == '' && 'edge' || inputs.tag-name }}
+          base-tag: ghcr.io/kentyou/[CATEGORY]

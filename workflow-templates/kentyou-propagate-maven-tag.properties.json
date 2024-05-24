@@ -1,0 +1,11 @@
+{
+    "name": "Kentyou Trigger Dependency Update",
+    "description": "When this repository is tagged, trigger the tagging of depedency repositories.",
+    "iconName": "octicon workflow",
+    "categories": [
+        "continuous-integration"
+    ],
+    "filePatterns": [
+        "pom.xml$"
+    ]
+}
