@@ -39,19 +39,19 @@ jobs:
         cancel-workflow: 'MISSING'
         repo-secret: ${{ secrets.KENTYOU_DISPATCH_PAT }}
     - name: Set up Docker
-      uses: kentyou/build-automation/actions/docker-setup@2c1c6bb9e9f1d48fb9c5ac5fe8ce6e8b60cb7cb5
+      uses: kentyou/build-automation/actions/docker-setup@1f7bed89a5408924188b2d9b661a678d7e332411
       with:
           docker-user: ${{ github.actor }}
           docker-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and Push Docker Image
-      uses: kentyou/build-automation/actions/docker-push@23058974f4ef4399e417ce06c3a0586e7392f994
+      uses: kentyou/build-automation/actions/docker-push@1f7bed89a5408924188b2d9b661a678d7e332411
       with:
           push-image: true
           maven-token: ${{ secrets.KENTYOU_CI_PAT }}
-          docker-tags: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
-          base-tag: ghcr.io/kentyou/[BASE]
+          tag-base: ghcr.io/kentyou/[BASE]
+          tag-name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
     - name: Publish Tag to GitHub
-      uses: kentyou/build-automation/actions/github-repo-tag@9471567340aac22604745849e1fb923290d48194
+      uses: kentyou/build-automation/actions/github-repo-tag@1f7bed89a5408924188b2d9b661a678d7e332411
       with:
           tag-name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
 
