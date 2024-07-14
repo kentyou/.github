@@ -19,17 +19,11 @@ name: Propagate Build Tags for Maven Projects
 on:
   repository_dispatch:
     types: [dependency-tag]
-  # This is for testing only, while I am currently unable to
-  # run respository_dispatch due to email verification problem.
   workflow_dispatch:
     inputs:
       tag-name:
         description: 'The name of the tag to create'
         required: true
-        type: string
-      release-repo:
-        description: 'The name of the destination repository'
-        required: false
         type: string
 
 jobs:
@@ -58,9 +52,7 @@ jobs:
     - name: Create and Publish tag
       uses: kentyou/build-automation/actions/maven-tag@f08ff697ccd326ae99f9dc675a7b1b201029f5c2 # v1.1.0
       with:
-        # Change back when email problem resolved
-        #tag-name: ${{ github.event.client_payload.tag-name }}
-        tag-name: ${{ inputs.tag-name }}
+        tag-name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
         repo-secret: ${{ secrets.GITHUB_TOKEN }}
 
   notify-dependents:
@@ -74,12 +66,8 @@ jobs:
 
     steps:
     - name: Notify dependents
-      uses: kentyou/build-automation/actions/downstream-dispatch@afbfd7f91e51b66ae9bfa6f9d0e8aa51c51c5679 # dml/tagging
-      # Change these back when email problem resolved
+      uses: kentyou/build-automation/actions/downstream-dispatch@c97a00fe04569dc601a316aabb0fe9068a26724b # v1.0.0
       with:
         repo-name: ${{ matrix.repo-name }}
-        #tag-name: ${{ github.event.client_payload.tag-name }}
-        tag-name: ${{ inputs.tag-name }}
+        tag-name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag-name || inputs.tag-name }}
         repo-secret: ${{ secrets.KENTYOU_DISPATCH_PAT }}
-        #release-repo: ${{ github.event.client_payload.release-repo }}
-        release-repo: ${{ inputs.release-repo }}
