@@ -1,3 +1,8 @@
+# Deletes a repositor tag and all packages that are tagged with the
+# given version and tag.
+
+# THIS IS A DESTRUCTIVE ACTION. USE WITH CAUTION!!
+
 name: Delete GitHub Packages
 
 on:
@@ -75,7 +80,7 @@ jobs:
         echo "$packages" | jq -c '.[]' | while IFS= read -r package; do
           package_name=$(echo "$package" | jq -r '.name')
           echo "Checking package: $package_name"
-          
+
           match_found=false
 
           # Get all versions of the current package
