@@ -44,7 +44,7 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Check Existing Deploy
-      uses: kentyou/build-automation/actions/maven-deploy-check@7fa6d006023adb35d21e65d00cb3080ea1df0cc0# v1.1.1 to be released?
+      uses: kentyou/build-automation/actions/maven-deploy-check@7fa6d006023adb35d21e65d00cb3080ea1df0cc0 # v1.1.1 to be released?
       with:
         artifact: 'artifactGroup:artifactID:${version}'
         module-path: parent
