@@ -61,7 +61,7 @@ jobs:
 
     runs-on: ubuntu-latest
     needs: check-dependencies-and-tag
-    if: inputs.propagate == 'true'
+    if: ${{ toJSON(inputs.propagate) == 'true' }}
 
     strategy:
       matrix:
